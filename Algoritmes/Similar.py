@@ -1,7 +1,7 @@
 import psycopg2
 import random
 
-c = psycopg2.connect("dbname=DATABASENAAM user=postgres password=DATABASE WACHTWOORD") #Hiermee connect je met je database
+c = psycopg2.connect("dbname=DATABASE user=postgres password=WACHTWOORD") #Hiermee connect je met je database
 cursor = c.cursor()
 """In dit algoritme worden vier vergelijkbare producten gereturned.Deze producten worden aan de hand 
 van verschillen de factoren bepaalt."""
@@ -45,11 +45,10 @@ def klaar(prodid, naam, voorkeurlijst, lijst):
     """Deze defintie is de laatste voor dit algoritme. Hier word de voorkeurlijst gereturned.
        Als er te weinig ids in voorkeurlijst zit word het aangevult met de bepaalde hoeveelheid ids uit lijst. Als er
        te veel ids in voorkeurlijst zitten, worden er 4 random van gepakt en gereturned. """
-    if 'remove' in voorkeurlijst:   #'remove' word uit de lijst gehaald zodat er alleen maar product ids in zitten.
-        voorkeurlijst.remove('remove')
 
-    if 'remove' in lijst:           #'remove' word uit de lijst gehaald zodat er alleen maar product ids in zitten.
-        lijst.remove('remove')
+    for i in lijst:
+        if i in voorkeurlijst:
+            lijst.remove(i)
 
     if lijst != [] and len(voorkeurlijst) < 4:  #Als lijst niet leeg is en er minder dan 4 elementen in voorkeurlijst zit.
         lijst = modnar(lijst)                   # Word voorkeurlijst aangevult door elementen uit lijst.
@@ -164,7 +163,7 @@ def typetest(prodid, naam, zoeken, search, target, status):
     typeids.remove(prodid)
 
     if typeids == []:
-        return target_audience(prodid, naam, zoeken, search, ['remove'])
+        return target_audience(prodid, naam, zoeken, search, 'remove')
 
     elif status == []:
         if len(typeids) >= 4 and len(typeids) <= 10:
@@ -211,7 +210,7 @@ def price(prodid, naam, zoeken, search, target, type, status):
     prijsids.remove(prodid)
 
     if prijsids == []:
-        return typetest(prodid, naam, zoeken, search, target, ['remove'])
+        return typetest(prodid, naam, zoeken, search, target, 'remove')
 
     elif status == []:
         if len(prijsids) >= 4 and len(prijsids) <= 10:
@@ -241,7 +240,7 @@ def brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangem
     merkids.remove(prodid)
 
     if merkids == []:
-        return price(prodid, naam, zoeken, search, target, type, ['remove'])
+        return price(prodid, naam, zoeken, search, target, type, 'remove')
 
     elif status == []:
         if len(merkids) < 4:
