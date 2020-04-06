@@ -1,5 +1,3 @@
-# TODO: Add connection info
-
 with open('persoonlijk.csv', 'w', newline='') as csvout:
     fieldnames = ['profileid', 'pd_1', 'pd_2', 'pd_3', 'pd_4']
     writer = csv.DictWriter(csvout, fieldnames=fieldnames)
