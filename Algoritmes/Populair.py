@@ -7,7 +7,7 @@ cursor = c.cursor()
 
 
 def populair(cursor):
-    """In dit algoritme kijken we wat de meest populaire dagen van de afgelopen vijf dagen zijn"""
+    """In dit algoritme kijken we wat de meest populaire dagen van de afgelopen zeven dagen zijn"""
     with open('populair.csv', 'w', newline='') as csvout:
         fieldnames = ['productid', 'productnaam']
         writer = csv.DictWriter(csvout, fieldnames=fieldnames)
@@ -15,10 +15,10 @@ def populair(cursor):
 
         now = 1548242043 # Dit is de timestamp van de laatste sessie van de website. Als de website nog aan was zou je hier
                          # om de timestamp van dit moment te vragen. Dit doe je met datetime.datetime.now(). Maar voor nu is dit beter.
-        now -= 604800‬ # Hier krijgen we een timestamp van vijf dagen gelden. (432000 seconden in vijf dagen)
+        now -= 604800‬ # Hier krijgen we een timestamp van zeven dagen gelden. (60848000 seconden in zeven dagen)
 
         cursor.execute('Select producten_id from sessies as b, product_gekocht as a where b.id = a.sessies_id and b.eindtijd > (%s)', (now, ))
-        alleproducten = cursor.fetchall() # Selecteer alle producten die gekocht werden tussen vijf dagen geleden en nu.
+        alleproducten = cursor.fetchall() # Selecteer alle producten die gekocht werden tussen zeven dagen geleden en nu.
 
         cursor.execute("""select id from producten""")
         producten = cursor.fetchall()
