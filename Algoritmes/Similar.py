@@ -1,7 +1,7 @@
 import psycopg2
 import random
 
-c = psycopg2.connect("dbname=DATABASE user=postgres password=WACHTWOORD") #Hiermee connect je met je database
+c = psycopg2.connect("dbname=DATABASENAAM user=postgres password=WACHTWOORD") #Hiermee connect je met je database
 cursor = c.cursor()
 """In dit algoritme worden vier vergelijkbare producten gereturned.Deze producten worden aan de hand 
 van verschillen de factoren bepaalt."""
@@ -22,15 +22,16 @@ def similar(prodid):
 
     subsubids = []
 
-    for i in subsubid:          #Hier worden alle product ids met hetzelfde subsubcategorie in een lijst gezet.
-        subsubids.append(i[0])
-    subsubids.remove(prodid)    #Het meegegeven product id word uit de lijst gehaald.
+    if len(subsubid) != 0:
+        for i in subsubid:          #Hier worden alle product ids met hetzelfde subsubcategorie in een lijst gezet.
+            subsubids.append(i[0])
+        subsubids.remove(prodid)    #Het meegegeven product id word uit de lijst gehaald.
 
     if subsubcat == 74:         #Als het subsubcategorieid 74 is betekent dit dat het geen subsubcategorie heeft.
         return subcategorie(prodid, productnaam)
 
     elif len(subsubids) >= 4 and len(subsubids) <= 10:  #Als de lijst genoeg product ids bevat, word de definitie klaar uitgevoerd.
-        return klaar(prodid, productnaam, subsubids, [])
+        return klaar(subsubids, [])
 
     elif len(subsubids) < 4:    #Als de lijst te weinig producten bevat, word er gekeken naar de subcategorie.
         return subcategorie(prodid, productnaam)
@@ -41,10 +42,14 @@ def similar(prodid):
     else:
         return woord(prodid, productnaam)
 
-def klaar(prodid, naam, voorkeurlijst, lijst):
+def klaar(voorkeurlijst, lijst):
     """Deze defintie is de laatste voor dit algoritme. Hier word de voorkeurlijst gereturned.
        Als er te weinig ids in voorkeurlijst zit word het aangevult met de bepaalde hoeveelheid ids uit lijst. Als er
        te veel ids in voorkeurlijst zitten, worden er 4 random van gepakt en gereturned. """
+    if 'remove' in voorkeurlijst:
+        voorkeurlijst.remove('remove')
+    if 'remove' in lijst:
+        lijst.remove('remove')
 
     for i in lijst:
         if i in voorkeurlijst:
@@ -73,12 +78,15 @@ def categorie(prodid, naam):
 
     catids = []
 
-    for i in catid:
-        catids.append(i[0])
-    catids.remove(prodid)
+    if len(catid) != 0:
+        for i in catid:
+            catids.append(i[0])
+        catids.remove(prodid)
 
-    if len(catids) >= 4 and len(catids) <= 10:
-        return klaar(prodid, naam, catids, [])
+    if cat == 17:
+        return woord(prodid, naam)
+    elif len(catids) >= 4 and len(catids) <= 10:
+        return klaar(catids, [])
 
     elif len(catids) > 10:
         return target_audience(prodid, naam, 'categorieid', cat, [])
@@ -97,12 +105,17 @@ def subcategorie(prodid, naam):
     subcatid = cursor.fetchall()
 
     subcatids = []
-    for i in subcatid:
-        subcatids.append(i[0])
-    subcatids.remove(prodid)
 
-    if len(subcatids) >= 4 and len(subcatids) <= 10:
-        return klaar(prodid, naam, subcatids, [])
+    if len(subcatid) != 0:
+        for i in subcatid:
+            subcatids.append(i[0])
+        subcatids.remove(prodid)
+
+    if subcat == 27:
+        return categorie(prodid, naam)
+
+    elif len(subcatids) >= 4 and len(subcatids) <= 10:
+        return klaar(subcatids, [])
 
     elif len(subcatids) > 10:
         return target_audience(prodid, naam, 'sub_categorieid', subcat, [])
@@ -120,15 +133,16 @@ def target_audience(prodid, naam, zoeken, search, status):
 
     targetids = []
 
-    for i in targetid:
-        targetids.append(i[0])
-    targetids.remove(prodid)
+    if len(targetid) != 0:
+        for i in targetid:
+            targetids.append(i[0])
+        targetids.remove(prodid)
 
     if status == []:    #Als een algoritme naar de volgende filter gaat word het status [] meegegeven.
                         #Stel dat bij de volgende filter te weinig product ids uitkomen,
                         #dan geven we deze producten mee naar het vorige algoritme.
         if len(targetids) >= 4 and len(targetids) <= 10:
-            return klaar(prodid, naam, targetids, [])
+            return klaar(targetids, [])
 
         elif len(targetids) > 10:
             return typetest(prodid, naam, zoeken, search, target, [])
@@ -146,7 +160,7 @@ def target_audience(prodid, naam, zoeken, search, status):
     else:               #Als de status niet leeg is, betekent dit dat er niet genoeg product ids uitkwamen bij de volgende filter.
                         #Als voorkeurlijst geeft de definitie de ids van status mee. Deze ids zijn beter gefilterd.
                         #Zo krijgen we het beste resultaat
-        return klaar(prodid, naam, status, targetids)
+        return klaar(status, targetids)
 
 def typetest(prodid, naam, zoeken, search, target, status):
     """In deze definitie word gekeken naar het type van het gekozen product en pakt de producten met hetzelfde type."""
@@ -158,16 +172,17 @@ def typetest(prodid, naam, zoeken, search, target, status):
 
     typeids = []
 
-    for i in typeid:
-        typeids.append(i[0])
-    typeids.remove(prodid)
+    if len(typeid) != 0:
+        for i in typeid:
+            typeids.append(i[0])
+        typeids.remove(prodid)
 
     if typeids == []:
-        return target_audience(prodid, naam, zoeken, search, 'remove')
+        return target_audience(prodid, naam, zoeken, search, ['remove'])
 
     elif status == []:
         if len(typeids) >= 4 and len(typeids) <= 10:
-            return klaar(prodid, naam, typeids, [])
+            return klaar(typeids, [])
 
         elif len(typeids) > 10:
             return price(prodid, naam, zoeken, search, target, type, [])
@@ -176,7 +191,7 @@ def typetest(prodid, naam, zoeken, search, target, status):
             return target_audience(prodid, naam, zoeken, search, typeids)
 
     else:
-        return klaar(prodid, naam, status, typeids)
+        return klaar(status, typeids)
 
 def price(prodid, naam, zoeken, search, target, type, status):
     """In deze definitie word gekeken naar de prijs van het gekozen product. We pakken dan producten binnen de pricerange.
@@ -205,16 +220,17 @@ def price(prodid, naam, zoeken, search, target, type, status):
 
     prijsids = []
 
-    for i in prijsid:
-        prijsids.append(i[0])
-    prijsids.remove(prodid)
+    if len(prijsid) != 0:
+        for i in prijsid:
+            prijsids.append(i[0])
+        prijsids.remove(prodid)
 
     if prijsids == []:
-        return typetest(prodid, naam, zoeken, search, target, 'remove')
+        return typetest(prodid, naam, zoeken, search, target, ['remove'])
 
     elif status == []:
         if len(prijsids) >= 4 and len(prijsids) <= 10:
-            return klaar(prodid, naam, prijsids, [])
+            return klaar(prijsids, [])
 
         elif len(prijsids) < 4:
             return typetest(prodid, naam, zoeken, search, target, prijsids)
@@ -223,7 +239,7 @@ def price(prodid, naam, zoeken, search, target, type, status):
             return brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangemin, [])
 
     else:
-        return klaar(prodid, naam, status, prijsids)
+        return klaar(status, prijsids)
 
 def brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangemin, status):
     """Deze definitie kijkt naar het merk van het gekozen product en pakt de producten met hetzelfde merk."""
@@ -235,42 +251,82 @@ def brand(prodid, naam, zoeken, search, target, type, prijsrangemax, prijsrangem
 
     merkids = []
 
-    for i in merkid:
-        merkids.append(i[0])
-    merkids.remove(prodid)
+    if len(merkid) != 0:
+        for i in merkid:
+            merkids.append(i[0])
+        merkids.remove(prodid)
 
     if merkids == []:
-        return price(prodid, naam, zoeken, search, target, type, 'remove')
+        return price(prodid, naam, zoeken, search, target, type, ['remove'])
 
     elif status == []:
         if len(merkids) < 4:
             return price(prodid, naam, zoeken, search, target, type, merkids)
 
         else:
-            return klaar(prodid, naam, merkids, [])
+            return klaar(merkids, [])
 
     else:
-        return klaar(prodid, naam, status, merkids)
+        return klaar(status, merkids)
 
 def woord(prodid, naam):
     """In deze definite word er gekeken naar het eerste woord van het gekozen product en pakt de producten die
        hetzelfde woord bevatten."""
+    ids = []
+    getal = 0
     if ' ' in naam:
         naamlijst = naam.split(' ')
-        name = naamlijst[0]
-
+        while len(ids) < 5:
+            name = naamlijst[getal]
+            cursor.execute('select id from producten where naam like (%s)', ('%' + name + '%',))
+            ids = cursor.fetchall()
+            getal += 1
     else:
         name = naam
 
-    cursor.execute('select id from producten where naam like (%s)', ('% '+name+' %',))
-    ids = cursor.fetchall()
+        cursor.execute('select id from producten where naam like (%s)', ('%'+name+'%',))
+        ids = cursor.fetchall()
+
+    prijs = woordprijs(prodid)
+    minprijs = prijs[0]
+    maxprijs = prijs[1]
+    cursor.execute('select id from producten where naam like (%s) and verkoopprijs > (%s) and verkoopprijs <= (%s)',
+                   ('%'+name+'%', minprijs, maxprijs))
+    prijsids = cursor.fetchall()
 
     lijst8 = []
 
-    for i in ids:
+    if len(prijsids) >= 5:
+        iden = prijsids
+    else:
+        iden = ids
+
+    for i in iden:
         lijst8.append(i[0])
     lijst8.remove(prodid)
-    return klaar(prodid, naam, lijst8, [])
+
+    return klaar(lijst8, [])
+
+def woordprijs(prodid):
+    cursor.execute('select verkoopprijs from producten where id = (%s)', (prodid,))
+    prijs = cursor.fetchall()[0][0]
+    if prijs <= 2000:
+        prijsrangemax = prijs * 2
+        prijsrangemin = prijs // 2
+
+    elif prijs > 2000 and prijs <= 5000:
+        prijsrangemax = prijs * 1.75
+        prijsrangemin = prijs // 1.75
+
+    elif prijs > 5000 and prijs <= 30000:
+        prijsrangemax = prijs * 1.5
+        prijsrangemin = prijs // 1.5
+
+    else:
+        prijsrangemax = prijs * 1.25
+        prijsrangemin = prijs // 1.25
+
+    return prijsrangemin, prijsrangemax
 
 def modnar(lijst):
     """Deze definitie zorgt ervoor dat de meegegeven lijst 4 random elementen uit die lijst overhoud."""
